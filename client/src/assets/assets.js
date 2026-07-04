@@ -8,26 +8,27 @@ export const assets = {
 export const iconList = [
     {
         icon: "bx bx-home-alt",
-        title: "Home"
+        title: "Home",
+        menu: "home"
     },
     {
         icon: "bx bx-clipboard-check",
-        title: "Attendence"
+        title: "Attendence",
+        menu: "attendence"
     },
     {
         icon: "bx bx-bar-chart-big",
-        title: "Results"
+        title: "Results",
+        menu: "results"
     },
     {
         icon: "bx bx-book-open",
-        title: "Homework"
-    },
-    {
-        icon: "bx bx-message-circle",
-        title: "Messages"
+        title: "Homework",
+        menu: "home-work"
     },
     {
         icon:"bx bx-credit-card-alt",
-        title: "Fees"
+        title: "Fees",
+        menu: "fees"
     }
 ]

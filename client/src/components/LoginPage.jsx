@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const LoginPage = () => {
+    const [user, setUser] = useState("student")
     return (
         <div className='w-screen min-h-screen bg-gray-950 flex items-center justify-center'>
             <div className='w-[90vw] lg:w-1/4 bg-gray-600/20 text-center rounded-2xl'>
@@ -13,11 +14,11 @@ const LoginPage = () => {
                 </div>
 
                 <div className='w-full flex items-center justify-center gap-4 mb-5 mt-10'>
-                    <div className='flex items-center justify-center gap-3 px-10 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
+                    <div onClick={()=>setUser("student")} className='flex items-center justify-center gap-3 px-10 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
                         <i className='bx bx-user'></i>
                         <p>Student / Parent</p>
                     </div>
-                    <div className='flex items-center justify-center gap-3 px-10 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
+                    <div onClick={()=>setUser("teacher")} className='flex items-center justify-center gap-3 px-10 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
                         <i className='bx bx-whiteboard'></i>
                         <p>Teacher Login</p>
                     </div>
@@ -26,8 +27,16 @@ const LoginPage = () => {
                 <div className='w-full my-10 px-8'>
                     <form className='w-full flex items-center flex-col justify-center gap-6'>
                         <div className='flex items-start justify-start flex-col w-full px-3'>
-                            <label className='text-sm text-gray-100' htmlFor="name">Student ID or Mobile</label>
-                            <input type="text" id='name' name='name' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' />
+                            {user === "student"
+                                ? <>
+                                    <label className='text-sm text-gray-100' htmlFor="name">Student ID or Mobile</label>
+                                    <input type="text" id='name' name='name' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' />
+                                </>
+                                : <>
+                                    <label className='text-sm text-gray-100' htmlFor="name">Teacher username</label>
+                                    <input type="text" id='name' name='name' placeholder='admin' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' />
+                                </>}
+
                         </div>
 
                         <div className='flex items-start justify-start flex-col w-full px-3'>
