@@ -9,7 +9,7 @@ import Fees from './pages/Fees';
 import { Toaster } from 'react-hot-toast'
 
 const App = () => {
-  const [isLogedIn, setIsLogedIn] = useState(true);
+  const [isLogedIn, setIsLogedIn] = useState(false);
   const [menu, setMenu] = useState("home");
   return (
     <div className='min-h-screen w-screen bg-zinc-900/85 overflow-scroll scrollbar-none'>
