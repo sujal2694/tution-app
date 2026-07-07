@@ -1,10 +1,3 @@
-import letter_R from './letter-R.png'
-
-export const assets = {
-    letter_R,
-}
-
-
 export const iconList = [
     {
         icon: "bx bx-home-alt",
@@ -17,13 +10,28 @@ export const iconList = [
         menu: "attendence"
     },
     {
+        icon: "bx bx-calendar-detail",
+        title: "Routine",
+        menu: "routine"
+    },
+    {
         icon: "bx bx-book-open",
         title: "Homework",
         menu: "home-work"
     },
     {
+        icon:"bx bx-announcement",
+        title: "Notices",
+        menu: "notices"
+    },
+    {
         icon:"bx bx-credit-card-alt",
         title: "Fees",
         menu: "fees"
+    },
+    {
+        icon:"bx bx-group",
+        title: "Students",
+        menu: "students"
     }
 ]

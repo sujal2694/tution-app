@@ -53,7 +53,6 @@ const App = () => {
           </div>
           {menu === "home" ? <Home /> : ""}
           {menu === "attendence" ? <Attedence /> : ""}
-          {menu === "results" ? <Results /> : ""}
           {menu === "home-work" ? <Homework /> : ""}
           {menu === "fees" ? <Fees /> : ""}
         </>
