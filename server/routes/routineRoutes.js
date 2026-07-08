@@ -1,7 +1,9 @@
 import e from "express";
-import { addRoutine, getRoutines } from "../controller/routineController.js";
+import { createSchedule, deleteItem, getAllSchedules, getScheduleByDay } from "../controller/routineController.js";
 
 export const routineRouter = e.Router();
 
-routineRouter.post("/add-routine", addRoutine);
-routineRouter.get("/get-routine", getRoutines);
+routineRouter.post("/add-routine", createSchedule);
+routineRouter.get("/get-routine", getAllSchedules);
+routineRouter.get("/day/:day", getScheduleByDay);
+routineRouter.post('/delete-item', deleteItem);

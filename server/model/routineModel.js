@@ -1,9 +1,45 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose'
 
-export const routineSchema = new mongoose.Schema({
-    day: { type: String, required: true },
-    time: { type: String, required: true },
-    subject: { type: String, required: true },
-}, { timestamps: true });
+const itemSchema = new mongoose.Schema(
+  {
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    startTime: {
+      type: String,
+      required: true,
+    },
+    endTime: {
+      type: String,
+      required: true,
+    }
+  },
+  { _id: false } 
+);
 
-export const routineModel = mongoose.models.model || mongoose.model("routine", routineSchema);
+const daySchema = new mongoose.Schema(
+  {
+    day: {
+      type: String,
+      required: true,
+      enum: [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ],
+    },
+    items: {
+      type: [itemSchema],
+      default: [],
+    },
+  },
+  { timestamps: true }
+);
+
+export const routineModel = mongoose.models.model || mongoose.model("routine", daySchema);

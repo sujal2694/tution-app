@@ -3,14 +3,18 @@ import { Context } from '../context/Context';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
 const Routine = () => {
     const { url } = useContext(Context);
     const [routine, setRoutine] = useState([]);
     const [routineData, setRoutineData] = useState({
         day: "",
-        time: "",
-        subject: ""
-    })
+        subject: "",
+        startTime: "",
+        endTime: ""
+    });
+    let scheduleId = [];
 
     const onChangeHandler = (event) => {
         const name = event.target.name;
@@ -18,28 +22,44 @@ const Routine = () => {
         setRoutineData(routineData => ({ ...routineData, [name]: value }))
     }
 
-    const handleDelete = (day, id) => {
-        setRoutine((prev) =>
-            prev
-                .map((d) =>
-                    d.day === day ? { ...d, items: d.items.filter((item) => item.id !== id) } : d
-                )
-                .filter((d) => d.items.length > 0)
-        );
+    const handleDelete = async (day, index) => {
+        try {
+            const response = await axios.delete(url + "/api/routine/delete-item", {
+                data: { day, index }
+            });
+            console.log(response.data);
+
+            if (response.data.success) {
+                setRoutine(response.data.routines);
+                toast.success("Class removed");
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to remove class");
+        }
     };
 
     const addRoutine = async (e) => {
         e.preventDefault();
+
+        if (!routineData.day || !routineData.subject || !routineData.startTime || !routineData.endTime) {
+            toast.error("Please fill all fields");
+            return;
+        }
+
         try {
             const response = await axios.post(url + "/api/routine/add-routine", routineData);
             if (response.data.success) {
-                setRoutine(response.data)
+                setRoutine(response.data.data);
                 toast.success("Routine added successfully");
                 setRoutineData({
                     day: "",
-                    time: "",
-                    subject: ""
+                    subject: "",
+                    startTime: "",
+                    endTime: ""
                 })
+            } else {
+                toast.error(response.data.message || "Routine not added");
             }
         } catch (error) {
             console.log(error);
@@ -50,10 +70,14 @@ const Routine = () => {
     const getRoutines = async () => {
         try {
             const response = await axios.get(url + "/api/routine/get-routine");
-            console.log(response);
+            console.log(response.data.data);
 
             if (response.data.success) {
-                setRoutine(response.data.routines);
+                setRoutine(response.data.data);
+                for (let i = 0; i <= (routine.length + 1); i++) {
+                    scheduleId.push(response.data.data[i]._id)
+                }
+                console.log(scheduleId);
             }
         } catch (error) {
             console.log(error);
@@ -72,18 +96,45 @@ const Routine = () => {
                     <span>Add class routine</span>
                 </p>
                 <form onSubmit={addRoutine} className='flex items-center gap-2 flex-col mt-3'>
-                    <select name='day' value={routineData.day} onChange={onChangeHandler} className='bg-zinc-800 text-white/40 px-3 py-2 rounded-md ring ring-gray-300/30 w-full'>
-                        <option value="monday">Monday</option>
-                        <option value="tuesday">Tuesday</option>
-                        <option value="wendsday">Wendsday</option>
-                        <option value="thursday">Thursday</option>
-                        <option value="friday">Friday</option>
-                        <option value="saturday">Saturday</option>
+                    <select
+                        name='day'
+                        value={routineData.day}
+                        onChange={onChangeHandler}
+                        className='bg-zinc-800 text-white/40 px-3 py-2 rounded-md ring ring-gray-300/30 w-full'
+                    >
+                        <option value="">Select day</option>
+                        {daysOfWeek.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                        ))}
                     </select>
 
-                    <input name='time' value={routineData.time} onChange={onChangeHandler} type="text" placeholder='Time (e.g. 4:00 - 5:00 PM)' className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30' />
+                    <input
+                        name='subject'
+                        value={routineData.subject}
+                        onChange={onChangeHandler}
+                        type="text"
+                        placeholder='Subject'
+                        className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                    />
 
-                    <input name='subject' value={routineData.subject} onChange={onChangeHandler} type="text" placeholder='Subject' className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30' />
+                    <div className='flex items-center gap-2 w-full'>
+                        <input
+                            name='startTime'
+                            value={routineData.startTime}
+                            onChange={onChangeHandler}
+                            type="text"
+                            placeholder='Start time'
+                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                        />
+                        <input
+                            name='endTime'
+                            value={routineData.endTime}
+                            onChange={onChangeHandler}
+                            type="text"
+                            placeholder='End time'
+                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                        />
+                    </div>
 
                     <button type='submit' className='w-full ring ring-gray-300/30 text-white text-md py-2 mt-3 rounded-lg hover:bg-gray-400/10 cursor-pointer'>Add to routine</button>
                 </form>
@@ -96,33 +147,38 @@ const Routine = () => {
                 </div>
 
                 <div className="space-y-5">
-                    {routine.map((item) => (
-                        <>
-                            <p className='text-lg text-blue-500'>{item.day}</p>
-                            <div
-                                key={item.day}
-                                className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
-                            >
-                                <div>
-                                    <p className="text-neutral-100 font-semibold text-sm">
-                                        {item.subject}
-                                    </p>
-                                    <p className="text-neutral-400 text-xs mt-1">
-                                        {item.time}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => handleDelete(dayBlock.day, item.id)}
-                                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors flex-shrink-0"
-                                    aria-label={`Delete ${item.subject}`}
-                                >
-                                    <i className='bx bx-trash'></i>
-                                </button>
+                    {(routine).map((dayBlock) => (
+                        <div key={dayBlock.day}>
+                            <p className='text-lg text-blue-500 font-semibold mb-2'>{dayBlock.day}</p>
+
+                            <div className="space-y-2">
+                                {dayBlock.items.map((item, index) => (
+                                    <div
+                                        key={`${dayBlock.day}-${index}`}
+                                        className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
+                                    >
+                                        <div>
+                                            <p className="text-neutral-100 font-semibold text-sm">
+                                                {item.subject}
+                                            </p>
+                                            <p className="text-neutral-400 text-xs mt-1">
+                                                {item.startTime} - {item.endTime}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDelete(dayBlock.day)}
+                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors flex-shrink-0"
+                                            aria-label={`Delete ${item.subject}`}
+                                        >
+                                            <i className='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                        </>
+                        </div>
                     ))}
 
-                    {routine.length === 0 && (
+                    {(!routine || routine.length === 0) && (
                         <p className="text-white text-sm text-center py-6">
                             No classes scheduled.
                         </p>
