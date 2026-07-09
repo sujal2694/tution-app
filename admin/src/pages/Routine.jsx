@@ -14,7 +14,10 @@ const Routine = () => {
         startTime: "",
         endTime: ""
     });
-    let scheduleId = [];
+
+    // track which item is being edited: { dayId, itemId }
+    const [editing, setEditing] = useState(null);
+    const [editValues, setEditValues] = useState({ subject: "", startTime: "", endTime: "" });
 
     const onChangeHandler = (event) => {
         const name = event.target.name;
@@ -22,16 +25,19 @@ const Routine = () => {
         setRoutineData(routineData => ({ ...routineData, [name]: value }))
     }
 
+    // Matches deleteItem controller (POST /api/routine/delete-item, body: { day, index })
     const handleDelete = async (day, index) => {
         try {
-            const response = await axios.delete(url + "/api/routine/delete-item", {
-                data: { day, index }
+            const response = await axios.post(url + "/api/routine/delete-item", {
+                day,
+                index
             });
-            console.log(response.data);
 
             if (response.data.success) {
                 setRoutine(response.data.routines);
                 toast.success("Class removed");
+            } else {
+                toast.error(response.data.message || "Failed to remove class");
             }
         } catch (error) {
             console.log(error);
@@ -50,39 +56,78 @@ const Routine = () => {
         try {
             const response = await axios.post(url + "/api/routine/add-routine", routineData);
             if (response.data.success) {
-                setRoutine(response.data.data);
+                setRoutine(response.data.routines); // createSchedule returns { routines }, not { data }
                 toast.success("Routine added successfully");
-                setRoutineData({
-                    day: "",
-                    subject: "",
-                    startTime: "",
-                    endTime: ""
-                })
+                setRoutineData({ day: "", subject: "", startTime: "", endTime: "" });
             } else {
                 toast.error(response.data.message || "Routine not added");
             }
         } catch (error) {
             console.log(error);
-            toast.error("Routine not added")
+            toast.error("Routine not added");
         }
     }
 
     const getRoutines = async () => {
         try {
             const response = await axios.get(url + "/api/routine/get-routine");
-            console.log(response.data.data);
 
             if (response.data.success) {
                 setRoutine(response.data.data);
-                for (let i = 0; i <= (routine.length + 1); i++) {
-                    scheduleId.push(response.data.data[i]._id)
-                }
-                console.log(scheduleId);
             }
         } catch (error) {
             console.log(error);
+            toast.error("Failed to load routine");
         }
     }
+
+    // --- Edit item (uses updateSchedule: PUT /api/routine/:id) ---
+    const startEdit = (dayBlock, item) => {
+        setEditing({ dayId: dayBlock._id, itemId: item._id });
+        setEditValues({
+            subject: item.subject,
+            startTime: item.startTime,
+            endTime: item.endTime
+        });
+    };
+
+    const cancelEdit = () => {
+        setEditing(null);
+        setEditValues({ subject: "", startTime: "", endTime: "" });
+    };
+
+    const onEditChangeHandler = (e) => {
+        const { name, value } = e.target;
+        setEditValues(prev => ({ ...prev, [name]: value }));
+    };
+
+    const saveEdit = async (dayBlock) => {
+        const updatedItems = dayBlock.items.map(item =>
+            item._id === editing.itemId
+                ? { ...item, ...editValues }
+                : item
+        );
+
+        try {
+            const response = await axios.put(url + `/api/routine/${dayBlock._id}`, {
+                day: dayBlock.day,
+                items: updatedItems
+            });
+
+            if (response.data.success) {
+                setRoutine(prev =>
+                    prev.map(d => d._id === dayBlock._id ? response.data.data : d)
+                );
+                toast.success("Class updated");
+                cancelEdit();
+            } else {
+                toast.error(response.data.message || "Failed to update class");
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to update class");
+        }
+    };
 
     useEffect(() => {
         getRoutines();
@@ -152,28 +197,78 @@ const Routine = () => {
                             <p className='text-lg text-blue-500 font-semibold mb-2'>{dayBlock.day}</p>
 
                             <div className="space-y-2">
-                                {dayBlock.items.map((item, index) => (
-                                    <div
-                                        key={`${dayBlock.day}-${index}`}
-                                        className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
-                                    >
-                                        <div>
-                                            <p className="text-neutral-100 font-semibold text-sm">
-                                                {item.subject}
-                                            </p>
-                                            <p className="text-neutral-400 text-xs mt-1">
-                                                {item.startTime} - {item.endTime}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDelete(dayBlock.day)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors flex-shrink-0"
-                                            aria-label={`Delete ${item.subject}`}
+                                {dayBlock.items.map((item, index) => {
+                                    const isEditing = editing && editing.dayId === dayBlock._id && editing.itemId === item._id;
+
+                                    return (
+                                        <div
+                                            key={item._id || `${dayBlock.day}-${index}`}
+                                            className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
                                         >
-                                            <i className='bx bx-trash'></i>
-                                        </button>
-                                    </div>
-                                ))}
+                                            {isEditing ? (
+                                                <div className="flex items-center gap-2 w-full flex-wrap">
+                                                    <input
+                                                        name="subject"
+                                                        value={editValues.subject}
+                                                        onChange={onEditChangeHandler}
+                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 flex-1 min-w-[100px]"
+                                                    />
+                                                    <input
+                                                        name="startTime"
+                                                        value={editValues.startTime}
+                                                        onChange={onEditChangeHandler}
+                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24"
+                                                    />
+                                                    <input
+                                                        name="endTime"
+                                                        value={editValues.endTime}
+                                                        onChange={onEditChangeHandler}
+                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24"
+                                                    />
+                                                    <button
+                                                        onClick={() => saveEdit(dayBlock)}
+                                                        className="px-3 py-1 rounded-md bg-green-600 text-white text-sm"
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={cancelEdit}
+                                                        className="px-3 py-1 rounded-md bg-neutral-600 text-white text-sm"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div>
+                                                        <p className="text-neutral-100 font-semibold text-sm">
+                                                            {item.subject}
+                                                        </p>
+                                                        <p className="text-neutral-400 text-xs mt-1">
+                                                            {item.startTime} - {item.endTime}
+                                                        </p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => startEdit(dayBlock, item)}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-blue-400 transition-colors"
+                                                            aria-label={`Edit ${item.subject}`}
+                                                        >
+                                                            <i className='bx bx-edit'></i>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(dayBlock.day, index)}
+                                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors"
+                                                            aria-label={`Delete ${item.subject}`}
+                                                        >
+                                                            <i className='bx bx-trash'></i>
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}

@@ -4,9 +4,10 @@ import { Toaster } from 'react-hot-toast'
 import Home from './pages/Home';
 import Students from './pages/Students';
 import Routine from './pages/Routine';
+import Attendence from './pages/Attendence';
 
 const App = () => {
-  const [menu, setMenu] = useState("routine");
+  const [menu, setMenu] = useState("attendence");
   return (
     <div>
       <div className='bg-blue-800 py-2'>
@@ -25,7 +26,7 @@ const App = () => {
       </div>
       <OptionBar setMenu={setMenu} />
       {menu === "home" ? <Home /> : ""}
-      {menu === "attendence" ? "" : ""}
+      {menu === "attendence" ? <Attendence /> : ""}
       {menu === "routine" ? <Routine /> : ""}
       {menu === "home-work" ? "" : ""}
       {menu === "notices" ? "" : ""}
