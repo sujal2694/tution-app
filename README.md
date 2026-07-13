@@ -1,4 +1,4 @@
-# Ila's Tuition
+# ILA's Tuition
 
 A full-stack tuition/coaching management platform built with the **MERN stack** (MongoDB, Express, React, Node.js). The project is split into three deployed services: a student-facing web app, an admin dashboard, and a backend REST API.
 
