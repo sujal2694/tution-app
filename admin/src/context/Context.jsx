@@ -4,7 +4,7 @@ export const Context = createContext(null);
 
 export const ContextProvider = ({children}) => {
 
-    const url = "http://localhost:4000"
+    const url = "https://tution-app-backend-two.vercel.app/"
 
     const contectValue = {
         url
