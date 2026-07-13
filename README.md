@@ -6,9 +6,9 @@ A full-stack tuition/coaching management platform built with the **MERN stack** 
 
 | App | URL | Description |
 |---|---|---|
-| **Main App** | [ila-tuition.vercel.app](https://ila-tuition.vercel.app/) | Student/parent-facing website |
-| **Admin Panel** | [tution-app-admin-nine.vercel.app](https://tution-app-admin-nine.vercel.app/) | Dashboard for managing content, users, and classes |
-| **Backend API** | [tution-app-backend-two.vercel.app](https://tution-app-backend-two.vercel.app/) | REST API powering both frontends |
+| **Main App** | [ila-tuition.vercel.app](https://ilas-tuition.onrender.com) | Student/parent-facing website |
+| **Admin Panel** | [tution-app-admin-nine.vercel.app](https://ilas-tuition-admin.onrender.com) | Dashboard for managing content, users, and classes |
+| **Backend API** | [tution-app-backend-two.vercel.app](https://ilas-tuition-backend.onrender.com) | REST API powering both frontends |
 
 ## Project Structure
 
