@@ -6,13 +6,41 @@ import Attedence from './pages/Attedence';
 import Homework from './pages/Homework';
 import Fees from './pages/Fees';
 import { Toaster } from 'react-hot-toast'
+import { useContext } from 'react';
+import { Context } from './context/Context';
+import { useEffect } from 'react';
+import axios from 'axios';
 
 const App = () => {
-  const [isLogedIn, setIsLogedIn] = useState(false);
+  const { token, setToken, searchParams, url } = useContext(Context);
   const [menu, setMenu] = useState("home");
+  const [student, setStudent] = useState([]);
+  const studentId = searchParams.get("studentId");
+
+  const fetchUser = () => {
+    let newToken = localStorage.getItem("token");
+    setToken(newToken);
+  }
+
+  const fetchStudents = async () => {
+    try {
+      const response = await axios.get(url + "/api/student/students");
+      if (response.data.success) {
+        setStudent(response.data.students)
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    fetchUser();
+    fetchStudents()
+  }, [])
+
   return (
     <div className='min-h-screen w-screen bg-zinc-900/85 overflow-scroll scrollbar-none'>
-      {isLogedIn
+      {token
         ? <>
           <div className=' bg-gradient-to-r from-blue-950 to-blue-400 py-8'>
             <div className='w-full flex items-center justify-between px-5'>
@@ -29,14 +57,22 @@ const App = () => {
             </div>
 
             <div className='flex items-center gap-8 mx-5 p-5 bg-white/20 rounded-2xl'>
-              <img className='w-16 aspect-square rounded-full' src={assets.letter_R} alt='R' />
-              <div className='leading-5'>
-                <p className='text-2xl font-bold'>Riya Shah</p>
-                <p className='text-sm'>Student ID: ILA-2024-047</p>
-                <div className='bg-white/30 w-fit px-3 py-1 rounded-full text-[12px] font-bold'>
-                  <p>Std 10 · Science</p>
-                </div>
-              </div>
+              {student.map((item) => (
+                <>
+                  {item.studentId === studentId && (
+                    <div key={item._id} className='flex items-center gap-5'>
+                      <img className='w-16 aspect-square rounded-full' src={assets.letter_R} alt='R' />
+                      <div className='leading-5'>
+                        <p className='text-2xl font-bold'>{item.fullName}</p>
+                        <p className='text-sm'>Student ID: {item.studentId}</p>
+                        <div className='bg-white/30 w-fit px-3 py-1 rounded-full text-[12px] font-bold'>
+                          <p>{item.standard}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ))}
             </div>
           </div>
 
@@ -55,7 +91,7 @@ const App = () => {
           {menu === "home-work" ? <Homework /> : ""}
           {menu === "fees" ? <Fees /> : ""}
         </>
-        : <LoginPage setIsLogedIn={setIsLogedIn} />
+        : <LoginPage />
       }
       <Toaster />
     </div>

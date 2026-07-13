@@ -1,45 +1,44 @@
 import React from 'react'
 import { assets, iconList } from '../assets/assets'
+import { useState } from 'react'
+import axios from 'axios';
+import { useContext } from 'react';
+import { Context } from '../context/Context';
+import { useEffect } from 'react';
 
 const Home = () => {
+    const { url } = useContext(Context);
+    const [notices, setNotices] = useState([]);
+
+    const fetchNotices = async () => {
+        try {
+            const response = await axios.get(url + "/api/notice/get-notices")
+            if (response.data.success) {
+                setNotices(response.data.notices)
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchNotices();
+    }, [url])
     return (
         <>
-            <div className='grid grid-cols-2 gap-5 text-center my-10 px-5'>
-                <div className='bg-zinc-800 rounded-2xl py-5'>
-                    <span className='text-3xl text-blue-400 font-semibold'>85%</span>
-                    <p className='text-sm'>Attendence</p>
-                </div>
-                <div className='bg-zinc-800 rounded-2xl py-5'>
-                    <span className='text-3xl text-blue-400 font-semibold'>78%</span>
-                    <p className='text-sm'>Average Score</p>
-                </div>
-                <div className='bg-zinc-800 rounded-2xl py-5'>
-                    <span className='text-3xl text-blue-400 font-semibold'>3</span>
-                    <p className='text-sm'>Pending Homework</p>
-                </div>
-                <div className='bg-zinc-800 rounded-2xl py-5'>
-                    <span className='text-3xl text-blue-400 font-semibold'>₹500</span>
-                    <p className='text-sm'>Fees due</p>
-                </div>
-            </div>
-
             <div className='mx-5 ring ring-gray-200/50 rounded-lg flex items-start justify-start flex-col px-5 py-8'>
                 <div className='flex items-center gap-2'>
                     <i className='bx bx-announcement text-2xl'></i>
                     <p>Latest notices</p>
                 </div>
 
-                <div className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
-                    <span className='text-sm text-gray-200/60'>10 jun - 2026</span>
-                    <h2 className='text-xl font-bold'>Unit Test - Maths & Science</h2>
-                    <p className='text-sm font-semibold text-gray-200/60'>Scheuled for 15 June 2026. Syllabus: ch 1 - 4.</p>
-                </div>
-
-                <div className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
-                    <span className='text-sm text-gray-200/60'>08 jun - 2026</span>
-                    <h2 className='text-xl font-bold'>Holiday - Monday</h2>
-                    <p className='text-sm font-semibold text-gray-200/60'>No classes on 09 June, Batch resumes Tuesday</p>
-                </div>
+                {notices.map((item) => (
+                    <div key={item._id} className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
+                        <span className='text-sm text-gray-200/60'>{item.date}</span>
+                        <h2 className='text-xl font-bold'>{item.title}</h2>
+                        <p className='text-sm font-semibold text-gray-200/60'>{item.details}</p>
+                    </div>
+                ))}
             </div>
 
             <div className='mx-5 my-5 ring ring-gray-200/50 rounded-lg flex items-start justify-start flex-col px-5 py-8'>

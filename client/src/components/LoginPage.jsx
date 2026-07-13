@@ -3,14 +3,13 @@ import { Context } from '../context/Context';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const LoginPage = ({ setIsLogedIn }) => {
-    const { url } = useContext(Context);
-    const [user, setUser] = useState("student");
+const LoginPage = () => {
+    const { url, setToken, setSearchParams } = useContext(Context);
     const [data, setData] = useState({
         studentId: "",
         password: ""
     })
-    const [showPassword, setShowPassword] = useState(false)
+    const [showPassword, setShowPassword] = useState(false);
 
     const onChangeHandler = (e) => {
         const name = e.target.name;
@@ -22,8 +21,10 @@ const LoginPage = ({ setIsLogedIn }) => {
         e.preventDefault();
         try {
             const response = await axios.post(url + "/api/user/user-login", data);
+            setSearchParams({ studentId: data.studentId })
             if (response.data.success) {
-                setIsLogedIn(true);
+                setToken(response.data.token)
+                localStorage.setItem("token", response.data.token)
                 setData({
                     studentId: "",
                     password: ""
@@ -34,7 +35,6 @@ const LoginPage = ({ setIsLogedIn }) => {
                 toast.error(response.data.message || "Login failed");
             }
         } catch (error) {
-            setIsLogedIn(false);
             toast(error.response?.data?.message || "Login failed. Please try again.");
         }
     }
@@ -49,30 +49,11 @@ const LoginPage = ({ setIsLogedIn }) => {
                     </div>
                 </div>
 
-                <div className='w-full flex items-center justify-between gap-4 mb-5 mt-10 px-2'>
-                    <div onClick={() => setUser("student")} className='w-full flex items-center justify-center gap-1 px-3 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
-                        <i className='bx bx-user'></i>
-                        <p>Student / Parent</p>
-                    </div>
-                    <div onClick={() => setUser("teacher")} className='w-full flex items-center justify-center gap-1 px-3 py-3 ring-2 ring-gray-600 rounded-2xl text-md font-semibold cursor-pointer hover:bg-gray-500/10 transition-all duration-300'>
-                        <i className='bx bx-whiteboard'></i>
-                        <p>Teacher Login</p>
-                    </div>
-                </div>
-
                 <div className='w-full my-10 px-8'>
                     <form onSubmit={onSubmit} className='w-full flex items-center flex-col justify-center gap-6'>
                         <div className='flex items-start justify-start flex-col w-full px-3'>
-                            {user === "student"
-                                ? <>
-                                    <label className='text-sm text-gray-100' htmlFor="name">Student ID or Mobile</label>
-                                    <input onChange={onChangeHandler} value={data.studentId} type="text" id='name' name='studentId' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' required />
-                                </>
-                                : <>
-                                    <label className='text-sm text-gray-100' htmlFor="name">Teacher username</label>
-                                    <input type="text" id='name' name='name' placeholder='admin' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' required />
-                                </>}
-
+                            <label className='text-sm text-gray-100' htmlFor="name">Student ID</label>
+                            <input onChange={onChangeHandler} value={data.studentId} type="text" id='name' name='studentId' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' required />
                         </div>
 
                         <div className='flex items-start justify-start flex-col w-full px-3'>

@@ -1,4 +1,8 @@
+import axios from 'axios'
 import React from 'react'
+import { useContext } from 'react'
+import { useEffect } from 'react'
+import { Context } from '../context/Context'
 
 const CircularProgress = ({ percentage = 75, size = 160, stroke = 14, color = '#48cae4', bg = '#495057' }) => {
     const radius = (size - stroke) / 2
@@ -31,6 +35,7 @@ const CircularProgress = ({ percentage = 75, size = 160, stroke = 14, color = '#
 }
 
 const Attedence = () => {
+    const { url } = useContext(Context);
     const percentage = 30;
     const days = Math.floor(365 * (percentage / 100));
 

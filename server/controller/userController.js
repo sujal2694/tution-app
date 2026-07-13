@@ -1,4 +1,5 @@
 import { userModel } from "../model/userModel.js";
+import { studentModel } from "../model/studentModel.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
@@ -10,8 +11,9 @@ const createToken = (id) => {
 export const loginUser = async (req, res) => {
     const { studentId, password } = req.body;
     try {
-        const user = await userModel.findOne({ studentId })
-
+        const user = await studentModel.findOne({ studentId })
+        console.log(user);
+        
         if (!user) {
             return res.json({ success: false, message: "User doesn't exists" })
         }

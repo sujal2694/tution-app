@@ -68,6 +68,32 @@ export const getStudents = async (req, res) => {
     }
 };
 
+export const getStudentById = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+
+        if (!studentId) {
+            return res.status(400).json({ message: 'Student ID is required' });
+        }
+
+        // Exclude password field from the result
+        const student = await studentModel.findOne({ studentId }).select('-password');
+
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Student fetched successfully',
+            student,
+        });
+    } catch (error) {
+        console.error('Fetch student error:', error);
+        return res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 export const removeStudent = async (req, res) => {
     const { studentId } = req.params;
 
