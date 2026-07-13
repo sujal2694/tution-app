@@ -3,7 +3,6 @@ import LoginPage from './components/LoginPage'
 import { assets, iconList } from './assets/assets'
 import Home from './pages/Home';
 import Attedence from './pages/Attedence';
-import Results from './pages/Results';
 import Homework from './pages/Homework';
 import Fees from './pages/Fees';
 import { Toaster } from 'react-hot-toast'
