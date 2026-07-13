@@ -5,9 +5,12 @@ import Home from './pages/Home';
 import Students from './pages/Students';
 import Routine from './pages/Routine';
 import Attendence from './pages/Attendence';
+import HomeWork from './pages/HomeWork';
+import Fees from './pages/Fees';
+import Notices from './pages/Notices';
 
 const App = () => {
-  const [menu, setMenu] = useState("attendence");
+  const [menu, setMenu] = useState("home");
   return (
     <div>
       <div className='bg-blue-800 py-2'>
@@ -28,8 +31,9 @@ const App = () => {
       {menu === "home" ? <Home /> : ""}
       {menu === "attendence" ? <Attendence /> : ""}
       {menu === "routine" ? <Routine /> : ""}
-      {menu === "home-work" ? "" : ""}
-      {menu === "notices" ? "" : ""}
+      {menu === "home-work" ? <HomeWork /> : ""}
+      {menu === "notices" ? <Notices /> : ""}
+      {menu === "fees" ? <Fees /> : ""}
       {menu === "students" ? <Students /> : ""}
       <Toaster />
     </div>
