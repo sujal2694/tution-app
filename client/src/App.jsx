@@ -15,6 +15,7 @@ const App = () => {
   const { token, setToken, searchParams, url } = useContext(Context);
   const [menu, setMenu] = useState("home");
   const [student, setStudent] = useState([]);
+  const [letter, setLetter] = useState('');
   const studentId = searchParams.get("studentId");
 
   const fetchUser = () => {
@@ -26,7 +27,7 @@ const App = () => {
     try {
       const response = await axios.get(url + "/api/student/students");
       if (response.data.success) {
-        setStudent(response.data.students)
+        setStudent(response.data.students);
       }
     } catch (error) {
       console.log(error);

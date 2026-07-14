@@ -25,7 +25,7 @@ app.use("/api/routine", routineRouter);
 app.use("/api/homework", homeWorkRouter);
 app.use("/api/notice", noticeRouter);
 app.use("/api/fees", feesRouter);
-app.use("/api/attendance", attendanceRouter);
+app.use("/api/attendence", attendanceRouter);
 
 
 app.get("/", (req, res) => {

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import React from 'react'
+import React, { useState } from 'react'
 import { useContext } from 'react'
 import { useEffect } from 'react'
 import { Context } from '../context/Context'
@@ -35,8 +35,33 @@ const CircularProgress = ({ percentage = 75, size = 160, stroke = 14, color = '#
 }
 
 const Attedence = () => {
-    const { url } = useContext(Context);
-    const percentage = 30;
+    const { url, searchParams } = useContext(Context);
+    const studentId = searchParams.get("studentId");
+    const [attendence, setAttendence] = useState([]);
+    const [count, setCount] = useState(0);
+
+    const fetchAttendence = async () => {
+        try {
+            const response = await axios.get(url + `/api/student/students`);
+            if (response.data.success) {
+                const students = response.data.students;
+                setAttendence(students);
+                const presentDays = students.filter(
+                    (student) => student.studentId === studentId
+                ).length;
+
+                setCount(presentDays);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        fetchAttendence();
+    }, [url, studentId]);
+
+    const percentage = ((count / 365) * 100).toFixed(1);
     const days = Math.floor(365 * (percentage / 100));
 
     return (
