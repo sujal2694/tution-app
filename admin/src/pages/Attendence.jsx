@@ -37,7 +37,7 @@ const Attendence = () => {
     };
 
     const handleAttendence = (studentId, status) => {
-        setattendence((prev) => ({ ...prev, [studentId]: status }));
+        setAttendence((prev) => ({ ...prev, [studentId]: status }));
     }
 
     const submitAttendence = async () => {
