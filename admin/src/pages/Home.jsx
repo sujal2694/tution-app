@@ -1,24 +1,34 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { Context } from '../context/Context';
 import axios from 'axios';
+import Loader from '../components/Loader'
 
 const Home = () => {
   const { url } = useContext(Context);
   const [notice, setNotice] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchNotices = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await axios.get(url + "/api/notice/get-notices");
       if (response.data.success) {
         setNotice(response.data.notices)
+      } else {
+        setError(response.data.message || "Failed to load notices");
       }
     } catch (error) {
       console.log(error);
+      setError("Error fetching notices");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchNotices()
+    if (url) fetchNotices()
   }, [url])
 
   return (
@@ -29,10 +39,13 @@ const Home = () => {
           <p>All Notices</p>
         </div>
 
-        {notice.length === 0 && (
+        {loading && <Loader text="Loading notices..." />}
+        {error && <p className='text-sm text-red-400 mt-3'>{error}</p>}
+
+        {!loading && !error && notice.length === 0 && (
           <p className='text-sm mt-2 text-zinc-300'>No notice from teacher.</p>
         )}
-        {notice.map((item) => (
+        {!loading && notice.map((item) => (
           <div key={item._id} className='bg-zinc-900 px-5 py-2 rounded-md border-l-2 border-blue-600 flex items-center justify-between mt-3'>
             <div className='leading-5 py-2'>
               <span className='text-sm text-zinc-300'>{item.date ? new Date(item.date).toLocaleDateString() : "N/A"}</span>

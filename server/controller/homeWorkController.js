@@ -1,4 +1,5 @@
-import homeworkModel from "../models/homeworkModel.js";
+import homeworkModel from "../model/homeWorkModel.js";
+
 
 // Add homework for an entire standard
 const addHomeWork = async (req, res) => {

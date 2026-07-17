@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useState } from 'react'
 import OptionBar from './components/OptionBar'
 import { Toaster } from 'react-hot-toast'
 import Home from './pages/Home';
@@ -8,9 +8,20 @@ import Attendence from './pages/Attendence';
 import HomeWork from './pages/HomeWork';
 import Fees from './pages/Fees';
 import Notices from './pages/Notices';
+import Loader from './components/Loader'
 
 const App = () => {
   const [menu, setMenu] = useState("home");
+  const [menuLoading, setMenuLoading] = useState(false);
+
+  const handleMenuChange = (newMenu) => {
+    if (newMenu === menu) return;
+    setMenuLoading(true);
+    setMenu(newMenu);
+    // brief delay so the switch feels intentional rather than instant/jarring
+    setTimeout(() => setMenuLoading(false), 250);
+  }
+
   return (
     <div>
       <div className='bg-blue-800 py-2'>
@@ -27,14 +38,23 @@ const App = () => {
           </div>
         </div>
       </div>
-      <OptionBar setMenu={setMenu} />
-      {menu === "home" ? <Home /> : ""}
-      {menu === "attendence" ? <Attendence /> : ""}
-      {menu === "routine" ? <Routine /> : ""}
-      {menu === "home-work" ? <HomeWork /> : ""}
-      {menu === "notices" ? <Notices /> : ""}
-      {menu === "fees" ? <Fees /> : ""}
-      {menu === "students" ? <Students /> : ""}
+      <OptionBar setMenu={handleMenuChange} />
+
+      {menuLoading ? (
+        <div className='bg-zinc-800 min-h-screen'>
+          <Loader text="Loading..." />
+        </div>
+      ) : (
+        <>
+          {menu === "home" && <Home />}
+          {menu === "attendence" && <Attendence />}
+          {menu === "routine" && <Routine />}
+          {menu === "home-work" && <HomeWork />}
+          {menu === "notices" && <Notices />}
+          {menu === "fees" && <Fees />}
+          {menu === "students" && <Students />}
+        </>
+      )}
       <Toaster />
     </div>
   )

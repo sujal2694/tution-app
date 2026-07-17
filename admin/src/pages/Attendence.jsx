@@ -2,14 +2,19 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Context } from '../context/Context';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import Loader from '../components/Loader'
 
 const Attendence = () => {
     const { url } = useContext(Context);
     const [studentList, setStudentList] = useState([]);
-    const [attendence, setAttendence] = useState({}); // { studentId: "P" | "A" }
-    const [date, setDate] = useState(new Date().toISOString().split("T")[0]); // "YYYY-MM-DD"
+    const [attendence, setAttendence] = useState({});
+    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+    const [loadingStudents, setLoadingStudents] = useState(true);
+    const [loadingAttendence, setLoadingAttendence] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     const fetchStudents = async () => {
+        setLoadingStudents(true);
         try {
             const response = await axios.get(url + "/api/student/students");
             if (response.data.success) {
@@ -17,11 +22,13 @@ const Attendence = () => {
             }
         } catch (error) {
             console.log(error.response?.data || error.message);
+        } finally {
+            setLoadingStudents(false);
         }
     };
 
-    // preload today's attendence if it's already been marked, so buttons reflect saved state
     const fetchAttendenceForDate = async (selectedDate) => {
+        setLoadingAttendence(true);
         try {
             const response = await axios.get(url + `/api/attendence/date/${selectedDate}`);
             if (response.data.success) {
@@ -33,6 +40,8 @@ const Attendence = () => {
             }
         } catch (error) {
             console.log(error.response?.data || error.message);
+        } finally {
+            setLoadingAttendence(false);
         }
     };
 
@@ -48,6 +57,7 @@ const Attendence = () => {
             return;
         }
 
+        setSubmitting(true);
         try {
             const response = await axios.post(
                 url + "/api/attendence/mark-bulk",
@@ -61,6 +71,8 @@ const Attendence = () => {
         } catch (error) {
             console.log(error.response?.data || error.message);
             toast.error(error.response?.data?.message || "attendence not saved");
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -71,6 +83,8 @@ const Attendence = () => {
     useEffect(() => {
         if (date) fetchAttendenceForDate(date);
     }, [date]);
+
+    const isLoading = loadingStudents || loadingAttendence;
 
     return (
         <div className='bg-zinc-800 w-full min-h-screen px-5 py-3'>
@@ -84,11 +98,14 @@ const Attendence = () => {
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className='ring ring-gray-300/30 bg-zinc-800 px-3 py-1 rounded-lg text-sm'
+                        disabled={isLoading}
+                        className='ring ring-gray-300/30 bg-zinc-800 px-3 py-1 rounded-lg text-sm disabled:opacity-50'
                     />
                 </div>
 
-                {studentList.length > 0 && (
+                {isLoading && <Loader text="Loading students..." />}
+
+                {!isLoading && studentList.length > 0 && (
                     studentList.map((student, index) => (
                         <div key={index} className='ring ring-gray-300/30 mt-3 rounded-md px-3 py-2 flex items-center justify-between'>
                             <div>
@@ -98,7 +115,8 @@ const Attendence = () => {
                             <div className='flex items-center gap-4'>
                                 <button
                                     onClick={() => handleAttendence(student.studentId, "P")}
-                                    className={`w-10 h-10 flex items-center justify-center ring rounded-full cursor-pointer ${
+                                    disabled={submitting}
+                                    className={`w-10 h-10 flex items-center justify-center ring rounded-full cursor-pointer disabled:opacity-50 ${
                                         attendence[student.studentId] === "P"
                                             ? "bg-green-600 ring-green-500"
                                             : "ring-gray-300/30"
@@ -108,7 +126,8 @@ const Attendence = () => {
                                 </button>
                                 <button
                                     onClick={() => handleAttendence(student.studentId, "A")}
-                                    className={`w-10 h-10 flex items-center justify-center ring rounded-full cursor-pointer ${
+                                    disabled={submitting}
+                                    className={`w-10 h-10 flex items-center justify-center ring rounded-full cursor-pointer disabled:opacity-50 ${
                                         attendence[student.studentId] === "A"
                                             ? "bg-red-600 ring-red-500"
                                             : "ring-gray-300/30"
@@ -121,12 +140,18 @@ const Attendence = () => {
                     ))
                 )}
 
-                {studentList.length > 0 && (
+                {!isLoading && studentList.length === 0 && (
+                    <p className='text-gray-400 mt-3'>No students found.</p>
+                )}
+
+                {!isLoading && studentList.length > 0 && (
                     <button
                         onClick={submitAttendence}
-                        className='w-full ring ring-gray-300/30 bg-zinc-900 hover:bg-zinc-700 px-5 py-2 rounded-lg mt-5 text-sm font-semibold tracking-wide cursor-pointer'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 bg-zinc-900 hover:bg-zinc-700 px-5 py-2 rounded-lg mt-5 text-sm font-semibold tracking-wide cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
                     >
-                        Save attendence
+                        {submitting && <i className='bx bx-loader-alt bx-spin'></i>}
+                        {submitting ? 'Saving...' : 'Save attendence'}
                     </button>
                 )}
             </div>

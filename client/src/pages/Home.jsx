@@ -77,8 +77,8 @@ const Home = () => {
                 {!noticesLoading && notices.map((item) => (
                     <div key={item._id} className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
                         <span className='text-sm text-gray-200/60'>{item.date}</span>
-                        <h2 className='text-xl font-bold'>{item.title}</h2>
-                        <p className='text-sm font-semibold text-gray-200/60'>{item.details}</p>
+                        <h2 className='text-xl font-bold uppercase'>{item.title}</h2>
+                        <p className='text-lg font-semibold text-gray-200/60'>{item.details}</p>
                     </div>
                 ))}
             </div>
@@ -105,9 +105,6 @@ const Home = () => {
                             >
                                 <div>
                                     <p className='text-xl'>{item.subject}</p>
-                                    {item.teacher && (
-                                        <span className='text-xs text-gray-400'>{item.teacher}</span>
-                                    )}
                                 </div>
                                 <span className='text-sm text-gray-300'>
                                     {item.startTime} - {item.endTime}

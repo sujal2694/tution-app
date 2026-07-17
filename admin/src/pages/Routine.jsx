@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { Context } from '../context/Context';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import Loader from '../components/Loader'
 
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -12,10 +13,14 @@ const Routine = () => {
         day: "",
         subject: "",
         startTime: "",
-        endTime: ""
+        endTime: "",
+        standard: ""
     });
+    const [loadingList, setLoadingList] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [deletingKey, setDeletingKey] = useState(null); // `${day}-${index}`
+    const [savingEdit, setSavingEdit] = useState(false);
 
-    // track which item is being edited: { dayId, itemId }
     const [editing, setEditing] = useState(null);
     const [editValues, setEditValues] = useState({ subject: "", startTime: "", endTime: "" });
 
@@ -25,8 +30,10 @@ const Routine = () => {
         setRoutineData(routineData => ({ ...routineData, [name]: value }))
     }
 
-    // Matches deleteItem controller (POST /api/routine/delete-item, body: { day, index })
     const handleDelete = async (day, index) => {
+        const key = `${day}-${index}`;
+        if (deletingKey) return;
+        setDeletingKey(key);
         try {
             const response = await axios.post(url + "/api/routine/delete-item", {
                 day,
@@ -42,6 +49,8 @@ const Routine = () => {
         } catch (error) {
             console.log(error);
             toast.error("Failed to remove class");
+        } finally {
+            setDeletingKey(null);
         }
     };
 
@@ -53,10 +62,11 @@ const Routine = () => {
             return;
         }
 
+        setSubmitting(true);
         try {
             const response = await axios.post(url + "/api/routine/add-routine", routineData);
             if (response.data.success) {
-                setRoutine(response.data.routines); // createSchedule returns { routines }, not { data }
+                setRoutine(response.data.routines);
                 toast.success("Routine added successfully");
                 setRoutineData({ day: "", subject: "", startTime: "", endTime: "" });
             } else {
@@ -65,10 +75,13 @@ const Routine = () => {
         } catch (error) {
             console.log(error);
             toast.error("Routine not added");
+        } finally {
+            setSubmitting(false);
         }
     }
 
     const getRoutines = async () => {
+        setLoadingList(true);
         try {
             const response = await axios.get(url + "/api/routine/get-routine");
 
@@ -78,10 +91,11 @@ const Routine = () => {
         } catch (error) {
             console.log(error);
             toast.error("Failed to load routine");
+        } finally {
+            setLoadingList(false);
         }
     }
 
-    // --- Edit item (uses updateSchedule: PUT /api/routine/:id) ---
     const startEdit = (dayBlock, item) => {
         setEditing({ dayId: dayBlock._id, itemId: item._id });
         setEditValues({
@@ -108,6 +122,7 @@ const Routine = () => {
                 : item
         );
 
+        setSavingEdit(true);
         try {
             const response = await axios.put(url + `/api/routine/${dayBlock._id}`, {
                 day: dayBlock.day,
@@ -126,6 +141,8 @@ const Routine = () => {
         } catch (error) {
             console.log(error);
             toast.error("Failed to update class");
+        } finally {
+            setSavingEdit(false);
         }
     };
 
@@ -142,10 +159,30 @@ const Routine = () => {
                 </p>
                 <form onSubmit={addRoutine} className='flex items-center gap-2 flex-col mt-3'>
                     <select
+                        name="standard"
+                        value={routineData.standard}
+                        onChange={onChangeHandler}
+                        disabled={submitting}
+                        className='bg-zinc-800 text-white/40 px-3 py-2 rounded-md ring ring-gray-300/30 w-full disabled:opacity-50'
+                    >
+                        <option value="">Select standard</option>
+                        <option value="lkg">LKG</option>
+                        <option value="ukg">UKG</option>
+                        <option value="std-1">Std 1</option>
+                        <option value="std-2">Std 2</option>
+                        <option value="std-3">Std 3</option>
+                        <option value="std-4">Std 4</option>
+                        <option value="std-5">Std 5</option>
+                        <option value="std-6">Std 6</option>
+                        <option value="std-7">Std 7</option>
+                        <option value="std-8">Std 8</option>
+                    </select>
+                    <select
                         name='day'
                         value={routineData.day}
                         onChange={onChangeHandler}
-                        className='bg-zinc-800 text-white/40 px-3 py-2 rounded-md ring ring-gray-300/30 w-full'
+                        disabled={submitting}
+                        className='bg-zinc-800 text-white/40 px-3 py-2 rounded-md ring ring-gray-300/30 w-full disabled:opacity-50'
                     >
                         <option value="">Select day</option>
                         {daysOfWeek.map((d) => (
@@ -157,9 +194,10 @@ const Routine = () => {
                         name='subject'
                         value={routineData.subject}
                         onChange={onChangeHandler}
+                        disabled={submitting}
                         type="text"
                         placeholder='Subject'
-                        className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                        className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30 disabled:opacity-50'
                     />
 
                     <div className='flex items-center gap-2 w-full'>
@@ -167,21 +205,30 @@ const Routine = () => {
                             name='startTime'
                             value={routineData.startTime}
                             onChange={onChangeHandler}
+                            disabled={submitting}
                             type="text"
                             placeholder='Start time'
-                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30 disabled:opacity-50'
                         />
                         <input
                             name='endTime'
                             value={routineData.endTime}
                             onChange={onChangeHandler}
+                            disabled={submitting}
                             type="text"
                             placeholder='End time'
-                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30'
+                            className='w-full text-white px-3 py-2 rounded-md ring ring-gray-300/30 disabled:opacity-50'
                         />
                     </div>
 
-                    <button type='submit' className='w-full ring ring-gray-300/30 text-white text-md py-2 mt-3 rounded-lg hover:bg-gray-400/10 cursor-pointer'>Add to routine</button>
+                    <button
+                        type='submit'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 text-white text-md py-2 mt-3 rounded-lg hover:bg-gray-400/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                    >
+                        {submitting && <i className='bx bx-loader-alt bx-spin'></i>}
+                        {submitting ? 'Adding...' : 'Add to routine'}
+                    </button>
                 </form>
             </div>
 
@@ -191,94 +238,110 @@ const Routine = () => {
                     <h1 className="text-neutral-100 font-semibold text-base">Weekly routine</h1>
                 </div>
 
-                <div className="space-y-5">
-                    {(routine).map((dayBlock) => (
-                        <div key={dayBlock.day}>
-                            <p className='text-lg text-blue-500 font-semibold mb-2'>{dayBlock.day}</p>
+                {loadingList && <Loader text="Loading routine..." />}
 
-                            <div className="space-y-2">
-                                {dayBlock.items.map((item, index) => {
-                                    const isEditing = editing && editing.dayId === dayBlock._id && editing.itemId === item._id;
+                {!loadingList && (
+                    <div className="space-y-5">
+                        {(routine).map((dayBlock) => (
+                            <div key={dayBlock.day}>
+                                <p className='text-lg text-blue-500 font-semibold mb-2'>{dayBlock.day}</p>
 
-                                    return (
-                                        <div
-                                            key={item._id || `${dayBlock.day}-${index}`}
-                                            className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
-                                        >
-                                            {isEditing ? (
-                                                <div className="flex items-center gap-2 w-full flex-wrap">
-                                                    <input
-                                                        name="subject"
-                                                        value={editValues.subject}
-                                                        onChange={onEditChangeHandler}
-                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 flex-1 min-w-[100px]"
-                                                    />
-                                                    <input
-                                                        name="startTime"
-                                                        value={editValues.startTime}
-                                                        onChange={onEditChangeHandler}
-                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24"
-                                                    />
-                                                    <input
-                                                        name="endTime"
-                                                        value={editValues.endTime}
-                                                        onChange={onEditChangeHandler}
-                                                        className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24"
-                                                    />
-                                                    <button
-                                                        onClick={() => saveEdit(dayBlock)}
-                                                        className="px-3 py-1 rounded-md bg-green-600 text-white text-sm"
-                                                    >
-                                                        Save
-                                                    </button>
-                                                    <button
-                                                        onClick={cancelEdit}
-                                                        className="px-3 py-1 rounded-md bg-neutral-600 text-white text-sm"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div>
-                                                        <p className="text-neutral-100 font-semibold text-sm">
-                                                            {item.subject}
-                                                        </p>
-                                                        <p className="text-neutral-400 text-xs mt-1">
-                                                            {item.startTime} - {item.endTime}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="space-y-2">
+                                    {dayBlock.items.map((item, index) => {
+                                        const isEditing = editing && editing.dayId === dayBlock._id && editing.itemId === item._id;
+                                        const isDeleting = deletingKey === `${dayBlock.day}-${index}`;
+
+                                        return (
+                                            <div
+                                                key={item._id || `${dayBlock.day}-${index}`}
+                                                className="flex items-center justify-between bg-[#343a40] rounded-xl px-4 py-3"
+                                            >
+                                                {isEditing ? (
+                                                    <div className="flex items-center gap-2 w-full flex-wrap">
+                                                        <input
+                                                            name="subject"
+                                                            value={editValues.subject}
+                                                            onChange={onEditChangeHandler}
+                                                            disabled={savingEdit}
+                                                            className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 flex-1 min-w-[100px] disabled:opacity-50"
+                                                        />
+                                                        <input
+                                                            name="startTime"
+                                                            value={editValues.startTime}
+                                                            onChange={onEditChangeHandler}
+                                                            disabled={savingEdit}
+                                                            className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24 disabled:opacity-50"
+                                                        />
+                                                        <input
+                                                            name="endTime"
+                                                            value={editValues.endTime}
+                                                            onChange={onEditChangeHandler}
+                                                            disabled={savingEdit}
+                                                            className="bg-zinc-800 text-white px-2 py-1 rounded-md ring ring-gray-300/30 w-24 disabled:opacity-50"
+                                                        />
                                                         <button
-                                                            onClick={() => startEdit(dayBlock, item)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-blue-400 transition-colors"
-                                                            aria-label={`Edit ${item.subject}`}
+                                                            onClick={() => saveEdit(dayBlock)}
+                                                            disabled={savingEdit}
+                                                            className="px-3 py-1 rounded-md bg-green-600 text-white text-sm disabled:opacity-50 flex items-center gap-1"
                                                         >
-                                                            <i className='bx bx-edit'></i>
+                                                            {savingEdit && <i className='bx bx-loader-alt bx-spin'></i>}
+                                                            Save
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDelete(dayBlock.day, index)}
-                                                            className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors"
-                                                            aria-label={`Delete ${item.subject}`}
+                                                            onClick={cancelEdit}
+                                                            disabled={savingEdit}
+                                                            className="px-3 py-1 rounded-md bg-neutral-600 text-white text-sm disabled:opacity-50"
                                                         >
-                                                            <i className='bx bx-trash'></i>
+                                                            Cancel
                                                         </button>
                                                     </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                                ) : (
+                                                    <>
+                                                        <div>
+                                                            <p className="text-neutral-100 font-semibold text-sm">
+                                                                {item.subject}
+                                                            </p>
+                                                            <p className="text-neutral-400 text-xs mt-1">
+                                                                {item.startTime} - {item.endTime}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            <button
+                                                                onClick={() => startEdit(dayBlock, item)}
+                                                                disabled={isDeleting}
+                                                                className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-blue-400 transition-colors disabled:opacity-50"
+                                                                aria-label={`Edit ${item.subject}`}
+                                                            >
+                                                                <i className='bx bx-edit'></i>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(dayBlock.day, index)}
+                                                                disabled={isDeleting}
+                                                                className="w-9 h-9 flex items-center justify-center rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-700/50 hover:text-red-400 transition-colors disabled:opacity-50"
+                                                                aria-label={`Delete ${item.subject}`}
+                                                            >
+                                                                {isDeleting
+                                                                    ? <i className='bx bx-loader-alt bx-spin'></i>
+                                                                    : <i className='bx bx-trash'></i>
+                                                                }
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
 
-                    {(!routine || routine.length === 0) && (
-                        <p className="text-white text-sm text-center py-6">
-                            No classes scheduled.
-                        </p>
-                    )}
-                </div>
+                        {(!routine || routine.length === 0) && (
+                            <p className="text-white text-sm text-center py-6">
+                                No classes scheduled.
+                            </p>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )

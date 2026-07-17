@@ -14,6 +14,10 @@ const itemSchema = new mongoose.Schema(
     endTime: {
       type: String,
       required: true,
+    },
+    standard: {
+      type: String,
+      required: true,
     }
   },
   { _id: false } 

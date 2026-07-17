@@ -30,6 +30,8 @@ const HomeWork = () => {
     const onChangeHandler = (e) => {
         const name = e.target.name;
         const value = e.target.value;
+        console.log(name,value);
+        
         setHomeWorkData(homeWorkData => ({ ...homeWorkData, [name]: value }));
     }
 
@@ -142,9 +144,16 @@ const HomeWork = () => {
                         className='w-full ring ring-gray-300/30 bg-zinc-800 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer disabled:opacity-50'
                     >
                         <option value="">Select standard</option>
-                        {standards.map((std) => (
-                            <option key={std} value={std}>{std}</option>
-                        ))}
+                        <option value="lkg">LKG</option>
+                        <option value="ukg">UKG</option>
+                        <option value="std-1">Std 1</option>
+                        <option value="std-2">Std 2</option>
+                        <option value="std-3">Std 3</option>
+                        <option value="std-4">Std 4</option>
+                        <option value="std-5">Std 5</option>
+                        <option value="std-6">Std 6</option>
+                        <option value="std-7">Std 7</option>
+                        <option value="std-8">Std 8</option>
                     </select>
                     <select
                         name='subject'

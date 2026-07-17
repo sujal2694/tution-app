@@ -2,7 +2,7 @@ import { routineModel } from "../model/routineModel.js";
 
 export const createSchedule = async (req, res) => {
   try {
-    const { day, subject, startTime, endTime } = req.body;
+    const { day, subject, startTime, endTime, standard } = req.body;
 
     if (!day || !subject || !startTime || !endTime) {
       return res.status(400).json({ success: false, message: "All fields are required" });
@@ -16,7 +16,7 @@ export const createSchedule = async (req, res) => {
     } else {
       dayDoc = await routineModel.create({
         day,
-        items: [{ subject, startTime, endTime }],
+        items: [{ subject, startTime, endTime, standard }],
       });
     }
 
