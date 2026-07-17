@@ -11,7 +11,6 @@ const Home = () => {
       const response = await axios.get(url + "/api/notice/get-notices");
       if (response.data.success) {
         setNotice(response.data.notices)
-        console.log(response);
       }
     } catch (error) {
       console.log(error);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 import axios from 'axios'
 import { Context } from '../context/Context'
+import Loader from '../components/Loader'
 
 const Home = () => {
     const { url } = useContext(Context)
@@ -35,14 +36,13 @@ const Home = () => {
         setScheduleLoading(true)
         setScheduleError(null)
         try {
-            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }) // e.g. "Monday"
+            const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
             const response = await axios.get(url + `/api/routine/day/${today}`)
             if (response.data.success) {
                 setSchedule(response.data.data)
             }
         } catch (error) {
             console.log(error)
-            // 404 just means no routine saved for today — not a real error
             if (error.response?.status === 404) {
                 setSchedule(null)
             } else {
@@ -68,13 +68,13 @@ const Home = () => {
                     <p>Latest notices</p>
                 </div>
 
-                {noticesLoading && <p className='text-sm text-gray-400 mt-4'>Loading notices...</p>}
+                {noticesLoading && <Loader text="Loading notices..." size="text-2xl" />}
                 {noticesError && <p className='text-sm text-red-400 mt-4'>{noticesError}</p>}
                 {!noticesLoading && !noticesError && notices.length === 0 && (
                     <p className='text-sm text-gray-400 mt-4'>No notices yet.</p>
                 )}
 
-                {notices.map((item) => (
+                {!noticesLoading && notices.map((item) => (
                     <div key={item._id} className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
                         <span className='text-sm text-gray-200/60'>{item.date}</span>
                         <h2 className='text-xl font-bold'>{item.title}</h2>
@@ -89,7 +89,7 @@ const Home = () => {
                     <p>Today's schedule</p>
                 </div>
 
-                {scheduleLoading && <p className='text-sm text-gray-400 mt-4 px-5'>Loading schedule...</p>}
+                {scheduleLoading && <Loader text="Loading schedule..." size="text-2xl" />}
                 {scheduleError && <p className='text-sm text-red-400 mt-4 px-5'>{scheduleError}</p>}
                 {!scheduleLoading && !scheduleError && (!schedule || schedule.items?.length === 0) && (
                     <p className='text-sm text-gray-400 mt-4 px-5'>No classes scheduled for today.</p>

@@ -10,6 +10,7 @@ const LoginPage = () => {
         password: ""
     })
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const onChangeHandler = (e) => {
         const name = e.target.name;
@@ -19,10 +20,12 @@ const LoginPage = () => {
 
     const onSubmit = async (e) => {
         e.preventDefault();
+        if (loading) return;
+        setLoading(true);
         try {
             const response = await axios.post(url + "/api/user/user-login", data);
-            setSearchParams({ studentId: data.studentId })
             if (response.data.success) {
+                setSearchParams({ studentId: data.studentId })
                 setToken(response.data.token)
                 localStorage.setItem("token", response.data.token)
                 setData({
@@ -31,11 +34,12 @@ const LoginPage = () => {
                 });
                 toast.success("Login successful");
             } else {
-                setIsLogedIn(false);
                 toast.error(response.data.message || "Login failed");
             }
         } catch (error) {
             toast(error.response?.data?.message || "Login failed. Please try again.");
+        } finally {
+            setLoading(false);
         }
     }
     return (
@@ -53,24 +57,33 @@ const LoginPage = () => {
                     <form onSubmit={onSubmit} className='w-full flex items-center flex-col justify-center gap-6'>
                         <div className='flex items-start justify-start flex-col w-full px-3'>
                             <label className='text-sm text-gray-100' htmlFor="name">Student ID</label>
-                            <input onChange={onChangeHandler} value={data.studentId} type="text" id='name' name='studentId' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' required />
+                            <input onChange={onChangeHandler} value={data.studentId} type="text" id='name' name='studentId' placeholder='e.g. ILA-2024-047' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md mt-2' required disabled={loading} />
                         </div>
 
                         <div className='flex items-start justify-start flex-col w-full px-3'>
                             <label className='text-sm text-gray-100' htmlFor="password">Password</label>
                             <div className='relative w-full mt-2'>
-                                <input onChange={onChangeHandler} value={data.password} type={showPassword ? 'text' : 'password'} id='password' name='password' placeholder='Enter password' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md pr-12 accent-white' required />
+                                <input onChange={onChangeHandler} value={data.password} type={showPassword ? 'text' : 'password'} id='password' name='password' placeholder='Enter password' className='ring ring-gray-400/70 w-full px-3 py-2 rounded-md bg-gray-500/30 text-md pr-12 accent-white' required disabled={loading} />
                                 <button
                                     type='button'
                                     onClick={() => setShowPassword(prev => !prev)}
                                     className='absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-200 hover:text-white'
+                                    disabled={loading}
                                 >
                                     {showPassword ? 'Hide' : 'Show'}
                                 </button>
                             </div>
                         </div>
 
-                        <button type='submit' className='font-semibold w-1/2 ring ring-gray-400/40 py-3 rounded-lg hover:bg-zinc-700/30 cursor-pointer'>Login</button>
+                        <button
+                            type='submit'
+                            disabled={loading}
+                            className={`font-semibold w-1/2 ring ring-gray-400/40 py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-200
+                                ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-zinc-700/30 cursor-pointer'}`}
+                        >
+                            {loading && <i className='bx bx-loader-alt bx-spin text-lg'></i>}
+                            {loading ? 'Logging in...' : 'Login'}
+                        </button>
                     </form>
                 </div>
 

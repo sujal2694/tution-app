@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
-import { Context } from '../context/Context' // adjust path to your actual context
+import { Context } from '../context/Context'
+import Loader from '../components/Loader'
 
 const Homework = () => {
   const { url } = useContext(Context)
@@ -74,7 +75,7 @@ const Homework = () => {
           </div>
         </div>
 
-        {loading && <p className='text-sm text-slate-400'>Loading homework...</p>}
+        {loading && <Loader text="Loading homework..." />}
         {error && <p className='text-sm text-red-400'>{error}</p>}
 
         {!loading && !error && (

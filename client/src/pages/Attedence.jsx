@@ -1,8 +1,7 @@
 import axios from 'axios'
-import React, { useState } from 'react'
-import { useContext } from 'react'
-import { useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Context } from '../context/Context'
+import Loader from '../components/Loader'
 
 const CircularProgress = ({ percentage = 75, size = 160, stroke = 14, color = '#48cae4', bg = '#495057' }) => {
     const radius = (size - stroke) / 2
@@ -38,34 +37,74 @@ const Attedence = () => {
     const { url, searchParams } = useContext(Context);
     const studentId = searchParams.get("studentId");
     const [attendence, setAttendence] = useState([]);
+    const [absentDays, setAbsentDays] = useState([]);
     const [count, setCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState(null);
 
-    const fetchAttendence = async () => {
+    const fetchAttendence = async (isRefresh = false) => {
+        isRefresh ? setRefreshing(true) : setLoading(true);
+        setError(null);
         try {
-            const response = await axios.get(url + `/api/student/students`);
+            const response = await axios.get(url + `/api/attendence/get-attendence`);
             if (response.data.success) {
-                const students = response.data.students;
+                const students = response.data.data;
                 setAttendence(students);
-                const presentDays = students.filter(
-                    (student) => student.studentId === studentId
-                ).length;
 
+                const studentRecords = students.filter(
+                    (student) => student.studentId === studentId
+                );
+
+                const presentDays = studentRecords.filter(
+                    (student) => student.status === "P"
+                ).length;
                 setCount(presentDays);
+
+                const absent = studentRecords
+                    .filter((student) => student.status === "A")
+                    .map((student) => ({
+                        status: student.status,
+                        date: student.date,
+                    }));
+                setAbsentDays(absent);
+            } else {
+                setError(response.data.message || 'Failed to load attendance');
             }
         } catch (error) {
             console.log(error);
+            setError('Error fetching attendance');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        fetchAttendence();
+        if (url && studentId) fetchAttendence();
     }, [url, studentId]);
 
     const percentage = ((count / 365) * 100).toFixed(1);
     const days = Math.floor(365 * (percentage / 100));
 
+    if (loading) return <Loader text="Loading attendance..." />;
+
     return (
         <div className='overflow-scroll scrollbar-none py-5'>
+            <div className='w-full flex items-center justify-end px-10'>
+                <button
+                    onClick={() => fetchAttendence(true)}
+                    disabled={refreshing}
+                    className={`flex items-center gap-3 ring ring-gray-200/40 px-7 py-2 rounded-lg transition-all duration-200
+                        ${refreshing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-zinc-400/30 cursor-pointer'}`}
+                >
+                    <i className={`bx ${refreshing ? 'bx-loader-alt bx-spin' : 'bx-refresh-cw'} text-xl`}></i>
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+            </div>
+
+            {error && <p className='text-sm text-red-400 text-center mt-3'>{error}</p>}
+
             <div className='flex items-center justify-center ring ring-gray-300/40 w-[90vw] m-auto my-10 py-7 rounded-2xl flex-col gap-5'>
                 <div className='text-center'>
                     <h2 className='mb-5 flex items-center gap-1'>
@@ -94,26 +133,18 @@ const Attedence = () => {
                     <p>Recent Records</p>
                 </div>
                 <ul className='mt-5'>
-                    <li className='flex items-center justify-between border-b border-gray-300/30 pb-1'>
-                        <p>10 Jun, Tue</p>
-                        <span className='flex items-center gap-1 text-green-500 text-sm'>
-                            <i className='bx bx-check'></i>
-                            <p>Present</p>
-                        </span>
-                    </li>
-                    <li className='flex items-center justify-between border-b border-gray-300/30 pb-1 mt-2'>
-                        <p>9 Jun, Mon</p>
-                        <span className='flex items-center gap-1 text-red-500 text-sm'>
-                            <i className='bx bx-x'></i>
-                            <p>Present</p>
-                        </span>
-                    </li>
-                    <li className='flex items-center justify-between pb-1 mt-2'>
-                        <p>7 Jun, Sat</p>
-                        <span className='flex items-center gap-1 text-gray-500 text-sm'>
-                            <p>Holiday</p>
-                        </span>
-                    </li>
+                    {absentDays.length === 0 && (
+                        <p className='text-sm text-gray-400 mt-3'>No absences recorded 🎉</p>
+                    )}
+                    {absentDays.map((day, index) => (
+                        <li key={index} className='flex items-center justify-between border-b border-gray-300/30 pb-1'>
+                            <p>{day.date}</p>
+                            <span className='flex items-center gap-1 text-red-500 text-sm'>
+                                <i className='bx bx-x'></i>
+                                <p>Absent</p>
+                            </span>
+                        </li>
+                    ))}
                 </ul>
             </div>
         </div>

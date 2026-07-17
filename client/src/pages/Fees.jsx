@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import axios from 'axios'
-import { Context } from '../context/Context' // adjust path to your actual context
+import { Context } from '../context/Context'
+import Loader from '../components/Loader'
 
 const Fees = () => {
   const { url, searchParams } = useContext(Context)
@@ -23,7 +24,6 @@ const Fees = () => {
       }
     } catch (err) {
       console.log(err)
-      // 404 means "no records", not a real error — treat it as empty
       if (err.response?.status === 404) {
         setFees([])
       } else {
@@ -50,7 +50,7 @@ const Fees = () => {
     .filter((fee) => fee.status === 'paid')
     .map((fee) => ({
       _id: fee._id,
-      date: fee.month, // no payment date field in the schema yet — see note above
+      date: fee.month,
       amount: `₹${fee.amount}`,
     }))
 
@@ -62,12 +62,13 @@ const Fees = () => {
     .filter((fee) => fee.status !== 'paid')
     .reduce((sum, fee) => sum + Number(fee.amount || 0), 0)
 
+  if (loading) return <Loader text="Loading fees..." />;
+
   return (
     <div className='max-w-4xl mx-auto p-4'>
-      {loading && <p className='text-sm text-slate-400'>Loading fees...</p>}
-      {error && <p className='text-sm text-red-400'>{error}</p>}
+      {error && <p className='text-sm text-red-400 text-center mb-4'>{error}</p>}
 
-      {!loading && !error && (
+      {!error && (
         <div className='grid gap-6'>
           <div className='grid grid-cols-2 gap-4'>
             <div className='rounded-3xl border border-slate-700/80 bg-zinc-800 p-5 text-center shadow-lg'>
