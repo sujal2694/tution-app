@@ -1,19 +1,33 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const homeWorkSchema = new mongoose.Schema({
-  subject: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-    description: {
-        type: String,
-        required: true
+const homeworkSchema = new mongoose.Schema(
+    {
+        subject: {
+            type: String,
+            required: true,
+        },
+        description: {
+            type: String,
+            default: "",
+        },
+        date: {
+            type: Date,
+            required: true,
+        },
+        standard: {
+            type: String,
+            required: true,
+        },
+        // tracks which students (by studentId) have marked this as submitted
+        submittedBy: {
+            type: [String],
+            default: [],
+        },
     },
-    date: {
-        type: Date,
-        required: true
-    }
-});
+    { timestamps: true }
+);
 
-export const homeWorkModel = mongoose.models.model || mongoose.model('homeWork', homeWorkSchema);
+const homeworkModel =
+    mongoose.models.homework || mongoose.model("homework", homeworkSchema);
+
+export default homeworkModel;

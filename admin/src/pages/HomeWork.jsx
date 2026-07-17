@@ -1,16 +1,31 @@
 import axios from 'axios';
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useMemo } from 'react'
 import toast from 'react-hot-toast';
 import { Context } from '../context/Context';
+import Loader from '../components/Loader'
 
 const HomeWork = () => {
     const { url } = useContext(Context);
     const [homeWork, setHomeWork] = useState([]);
+    const [students, setStudents] = useState([]);
     const [homeWorkData, setHomeWorkData] = useState({
         subject: "",
         description: "",
         date: "",
+        standard: ""
     })
+
+    const [loadingList, setLoadingList] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+
+    // derive unique standards from the students list, sorted naturally
+    const standards = useMemo(() => {
+        const unique = [...new Set(students.map((s) => s.standard).filter(Boolean))];
+        return unique.sort((a, b) =>
+            a.toString().localeCompare(b.toString(), undefined, { numeric: true })
+        );
+    }, [students]);
 
     const onChangeHandler = (e) => {
         const name = e.target.name;
@@ -21,20 +36,26 @@ const HomeWork = () => {
     const onSubmit = async (e) => {
         e.preventDefault();
 
+        if (!homeWorkData.standard) {
+            toast.error("Please select a standard.");
+            return;
+        }
         if (!homeWorkData.subject || !homeWorkData.date) {
             toast.error("Please select subject and date.");
             return;
         }
 
+        setSubmitting(true);
         try {
             const response = await axios.post(url + "/api/homework/add-home-work", homeWorkData);
             if (response.data.success) {
                 setHomeWorkData({
                     subject: "",
                     description: "",
-                    date: ""
+                    date: "",
+                    standard: ""
                 });
-                toast.success("Homework added.");
+                toast.success("Homework assigned to standard " + homeWorkData.standard);
                 getHomeWork();
             } else {
                 toast.error(response.data.message || "Failed to add homework");
@@ -42,14 +63,26 @@ const HomeWork = () => {
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.message || "Failed to add homework");
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    const getStudents = async () => {
+        try {
+            const res = await axios.get(url + "/api/student/students");
+            if (res.data.success) {
+                setStudents(res.data.students)
+            }
+        } catch (error) {
+            console.log(error);
         }
     }
 
     const getHomeWork = async () => {
+        setLoadingList(true);
         try {
             const response = await axios.get(url + "/api/homework/get-home-work");
-            console.log("Homework API response:", response); // keep this for now to verify key name
-
             if (response.data.success) {
                 setHomeWork(response.data.homeWorks || response.data.homework || []);
             } else {
@@ -58,26 +91,38 @@ const HomeWork = () => {
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.message || "Homework not fetched");
+        } finally {
+            setLoadingList(false);
         }
     }
 
     const deleteHomeWork = async (id) => {
+        if (deletingId) return;
+        const confirmed = window.confirm("Delete this homework? This can't be undone.");
+        if (!confirmed) return;
+
+        setDeletingId(id);
         try {
             const response = await axios.post(url + "/api/homework/delete-home-work", { id });
             if (response.data.success) {
                 toast.success("Homework deleted.");
-                getHomeWork(); // refresh list
+                setHomeWork((prev) => prev.filter((hw) => hw._id !== id));
             } else {
                 toast.error(response.data.message || "Failed to delete homework");
             }
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.message || "Failed to delete homework");
+        } finally {
+            setDeletingId(null);
         }
     }
 
     useEffect(() => {
-        getHomeWork();
+        if (url) {
+            getHomeWork();
+            getStudents();
+        }
     }, [url])
 
     return (
@@ -89,11 +134,25 @@ const HomeWork = () => {
                 </div>
                 <form onSubmit={onSubmit} className='flex items-center justify-center flex-col w-full'>
                     <select
+                        name="standard"
+                        value={homeWorkData.standard}
+                        onChange={onChangeHandler}
+                        required
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 bg-zinc-800 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer disabled:opacity-50'
+                    >
+                        <option value="">Select standard</option>
+                        {standards.map((std) => (
+                            <option key={std} value={std}>{std}</option>
+                        ))}
+                    </select>
+                    <select
                         name='subject'
                         value={homeWorkData.subject}
                         onChange={onChangeHandler}
                         required
-                        className='w-full ring ring-gray-300/30 bg-zinc-800 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 bg-zinc-800 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer disabled:opacity-50'
                     >
                         <option value="" disabled>Select subject</option>
                         <option value="maths">Maths</option>
@@ -107,7 +166,8 @@ const HomeWork = () => {
                         name='description'
                         value={homeWorkData.description}
                         onChange={onChangeHandler}
-                        className='w-full ring ring-gray-300/30 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide disabled:opacity-50'
                         type="text"
                         placeholder='Homework description'
                     />
@@ -118,10 +178,18 @@ const HomeWork = () => {
                         onChange={onChangeHandler}
                         type="date"
                         required
-                        className='w-full ring ring-gray-300/30 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide disabled:opacity-50'
                     />
 
-                    <button type='submit' className='w-full ring ring-gray-300/30 bg-zinc-900 hover:bg-transparent px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer'>Assign</button>
+                    <button
+                        type='submit'
+                        disabled={submitting}
+                        className='w-full ring ring-gray-300/30 bg-zinc-900 hover:bg-transparent px-5 py-2 rounded-lg mt-4 text-lg font-semibold tracking-wide cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
+                    >
+                        {submitting && <i className='bx bx-loader-alt bx-spin text-lg'></i>}
+                        {submitting ? 'Assigning...' : 'Assign'}
+                    </button>
                 </form>
             </div>
 
@@ -131,21 +199,39 @@ const HomeWork = () => {
                     <p>Homework List</p>
                 </div>
                 <div>
-                    {homeWork.length === 0 && (
+                    {loadingList && <Loader text="Loading homework..." />}
+
+                    {!loadingList && homeWork.length === 0 && (
                         <p className='text-gray-400 mt-3'>No homework assigned yet.</p>
                     )}
-                    {homeWork.map((item) => (
-                        <div key={item._id} className='border-b border-gray-300/30 flex items-center justify-between mt-3'>
-                            <div className='leading-5 py-2'>
-                                <p className='uppercase text-sm bg-blue-300/90 w-fit px-2 py-1 rounded-full text-gray-100 font-semibold tracking-wide'>{item.subject}</p>
-                                <h2 className='mt-3 text-lg font-semibold'>{item.description}</h2>
-                                <span className='text-sm text-zinc-400'>Due: {item.date ? new Date(item.date).toLocaleDateString() : "N/A"}</span>
+
+                    {!loadingList && homeWork.map((item) => {
+                        const isDeleting = deletingId === item._id;
+                        return (
+                            <div key={item._id} className='border-b border-gray-300/30 flex items-center justify-between mt-3'>
+                                <div className='leading-5 py-2'>
+                                    <div className='flex items-center gap-2'>
+                                        <p className='uppercase text-sm bg-blue-300/90 w-fit px-2 py-1 rounded-full text-gray-100 font-semibold tracking-wide'>{item.subject}</p>
+                                        {item.standard && (
+                                            <p className='text-xs bg-zinc-700 px-2 py-1 rounded-full text-zinc-300'>Std {item.standard}</p>
+                                        )}
+                                    </div>
+                                    <h2 className='mt-3 text-lg font-semibold'>{item.description}</h2>
+                                    <span className='text-sm text-zinc-400'>Due: {item.date ? new Date(item.date).toLocaleDateString() : "N/A"}</span>
+                                </div>
+                                <div
+                                    onClick={() => !isDeleting && deleteHomeWork(item._id)}
+                                    className={`w-10 h-10 ring ring-gray-300/30 flex items-center justify-center rounded-xl transition-all duration-300
+                                        ${isDeleting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:text-red-500 hover:bg-gray-300/30'}`}
+                                >
+                                    {isDeleting
+                                        ? <i className='bx bx-loader-alt bx-spin'></i>
+                                        : <i className='bx bx-trash'></i>
+                                    }
+                                </div>
                             </div>
-                            <div onClick={()=>deleteHomeWork(item._id)} className='w-10 h-10 ring ring-gray-300/30 flex items-center justify-center rounded-xl cursor-pointer hover:text-red-500 hover:bg-gray-300/30 transition-all duration-300'>
-                                <i className='bx bx-trash'></i>
-                            </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </div>
         </div>
