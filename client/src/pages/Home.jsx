@@ -14,6 +14,22 @@ const Home = () => {
     const [scheduleLoading, setScheduleLoading] = useState(true)
     const [scheduleError, setScheduleError] = useState(null)
 
+    const stds = []
+    const fetchStudents = async () => {
+        try {
+            const res = await axios.get(url + "/api/student/students");
+            if (res.data.success) {
+                res.data.students.forEach((student) => {
+                    stds.push({
+                        std: student.standard
+                    })
+                })
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     const fetchNotices = async () => {
         setNoticesLoading(true)
         setNoticesError(null)
@@ -35,11 +51,18 @@ const Home = () => {
     const fetchTodaySchedule = async () => {
         setScheduleLoading(true)
         setScheduleError(null)
+        const scheduleList = [];
         try {
             const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
             const response = await axios.get(url + `/api/routine/day/${today}`)
             if (response.data.success) {
-                setSchedule(response.data.data)
+                response.data.data.items.forEach((item) => {
+                    const isMatch = stds.some((std) => { std === item.standard })
+
+                    if (!isMatch) {
+                        setSchedule(response.data.data)
+                    }
+                })
             }
         } catch (error) {
             console.log(error)
@@ -61,28 +84,7 @@ const Home = () => {
     }, [url])
 
     return (
-        <>
-            <div className='mx-5 ring ring-gray-200/50 rounded-lg flex items-start justify-start flex-col px-5 py-8'>
-                <div className='flex items-center gap-2'>
-                    <i className='bx bx-announcement text-2xl'></i>
-                    <p>Latest notices</p>
-                </div>
-
-                {noticesLoading && <Loader text="Loading notices..." size="text-2xl" />}
-                {noticesError && <p className='text-sm text-red-400 mt-4'>{noticesError}</p>}
-                {!noticesLoading && !noticesError && notices.length === 0 && (
-                    <p className='text-sm text-gray-400 mt-4'>No notices yet.</p>
-                )}
-
-                {!noticesLoading && notices.map((item) => (
-                    <div key={item._id} className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
-                        <span className='text-sm text-gray-200/60'>{item.date}</span>
-                        <h2 className='text-xl font-bold uppercase'>{item.title}</h2>
-                        <p className='text-lg font-semibold text-gray-200/60'>{item.details}</p>
-                    </div>
-                ))}
-            </div>
-
+        <div className='pb-8'>
             <div className='mx-5 my-5 ring ring-gray-200/50 rounded-lg flex items-start justify-start flex-col px-5 py-8'>
                 <div className='flex items-center gap-2'>
                     <i className='bx bx-clock text-2xl'></i>
@@ -100,11 +102,11 @@ const Home = () => {
                         {schedule.items.map((item, idx) => (
                             <li
                                 key={item._id || idx}
-                                className={`flex items-center justify-between py-3 ${idx !== schedule.items.length - 1 ? 'border-b border-gray-200/40' : ''
+                                className={`flex items-center justify-between py-3 bg-zinc-800 px-5 rounded-lg ${idx !== schedule.items.length - 1 ? 'border-b border-gray-200/40' : ''
                                     }`}
                             >
                                 <div>
-                                    <p className='text-xl'>{item.subject}</p>
+                                    <p className='text-xl uppercase'>{item.subject}</p>
                                 </div>
                                 <span className='text-sm text-gray-300'>
                                     {item.startTime} - {item.endTime}
@@ -114,7 +116,32 @@ const Home = () => {
                     </ul>
                 )}
             </div>
-        </>
+
+            <div className='mx-5 ring ring-gray-200/50 rounded-lg flex items-start justify-start flex-col px-5 py-8'>
+                <div className='flex items-center gap-2'>
+                    <i className='bx bx-announcement text-2xl'></i>
+                    <p>Latest notices</p>
+                </div>
+
+                {noticesLoading && <Loader text="Loading notices..." size="text-2xl" />}
+                {noticesError && <p className='text-sm text-red-400 mt-4'>{noticesError}</p>}
+                {!noticesLoading && !noticesError && notices.length === 0 && (
+                    <p className='text-sm text-gray-400 mt-4'>No notices yet.</p>
+                )}
+
+                {!noticesLoading && notices.map((item) => (
+                    <div key={item._id} className='bg-zinc-800 rounded-2xl py-5 px-4 w-full border-l-8 mt-5 border-blue-400'>
+                        <span className='text-sm text-gray-200/60'>{new Date(item.date).toDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                        })}</span>
+                        <h2 className='text-xl font-bold uppercase'>{item.title}</h2>
+                        <p className='text-lg font-semibold text-gray-200/60'>{item.details}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
     )
 }
 

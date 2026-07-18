@@ -120,37 +120,42 @@ const Students = () => {
                     </form>
 
                     {loadingList && <Loader text="Loading students..." />}
-
-                    {!loadingList && (
-                        studentList.length > 0 ? studentList.map((student) => {
-                            const isRemoving = removingId === student.studentId;
-                            return (
-                                <div key={student._id} className='flex items-center justify-between ring ring-gray-200/50 mt-4 rounded-lg py-2 px-3'>
-                                    <div className='flex items-start justify-start flex-col'>
-                                        <p className='text-white text-lg font-semibold'>{student.fullName}</p>
-                                        <span className='flex items-center gap-1 text-sm text-gray-300/80'>
-                                            <p>{student.studentId}</p>
-                                            <div className='w-1 h-1 rounded-full bg-gray-200/80'></div>
-                                            <p>{student.standard}</p>
-                                            <div className='w-1 h-1 rounded-full bg-gray-200/80'></div>
-                                            <p>{student.phone}</p>
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => handleRemove(student.studentId)}
-                                        disabled={isRemoving}
-                                        className='px-3 py-2 ring ring-zinc-400 rounded-xl font-semibold hover:bg-gray-50/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
-                                    >
-                                        {isRemoving && <i className='bx bx-loader-alt bx-spin'></i>}
-                                        {isRemoving ? 'Removing...' : 'Remove'}
-                                    </button>
-                                </div>
-                            )
-                        }) : (
-                            <p className='text-gray-300 mt-4'>No students added yet.</p>
-                        )
-                    )}
                 </div>
+            </div>
+            <div className='ring ring-gray-200/30 rounded-lg p-3 bg-zinc-500/10 mt-10'>
+                <div className='flex items-center gap-2'>
+                    <i className='bx bx-list text-xl'></i>
+                    <p>Students List</p>
+                </div>
+                {!loadingList && (
+                    studentList.length > 0 ? studentList.map((student) => {
+                        const isRemoving = removingId === student.studentId;
+                        return (
+                            <div key={student._id} className='flex items-center justify-between ring ring-gray-200/50 mt-4 rounded-lg py-2 px-3'>
+                                <div className='flex items-start justify-start flex-col'>
+                                    <p className='text-white text-lg font-semibold'>{student.fullName}</p>
+                                    <span className='flex items-center gap-1 text-sm text-gray-300/80'>
+                                        <p>{student.studentId}</p>
+                                        <div className='w-1 h-1 rounded-full bg-gray-200/80'></div>
+                                        <p>{student.standard}</p>
+                                        <div className='w-1 h-1 rounded-full bg-gray-200/80'></div>
+                                        <p>{student.phone}</p>
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => handleRemove(student.studentId)}
+                                    disabled={isRemoving}
+                                    className='px-3 py-2 ring ring-zinc-400 rounded-xl font-semibold hover:bg-gray-50/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
+                                >
+                                    {isRemoving && <i className='bx bx-loader-alt bx-spin'></i>}
+                                    {isRemoving ? 'Removing...' : 'Remove'}
+                                </button>
+                            </div>
+                        )
+                    }) : (
+                        <p className='text-gray-300 mt-4'>No students added yet.</p>
+                    )
+                )}
             </div>
         </div>
     )
